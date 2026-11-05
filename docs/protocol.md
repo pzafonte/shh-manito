@@ -395,8 +395,10 @@ private keys never need to be extractable after generation. **It never holds a m
 key.**
 
 The backup is refreshed when attempt keys are generated, when an attempt becomes
-final, and after the player's own actions. It is never refreshed because something
-*arrived* (invariant I2, finding F15).
+final, and after the player sends a parcel. It is never refreshed because something
+*arrived* (invariant I2, finding F15). A changed guess rides along with the next
+refresh rather than causing one, because guesses tend to change just after a card
+lands.
 
 A restored client folds the log, opens what it can with the box key, and carries on.
 If it is mid-attempt and needs a mix key it does not have, it posts `abort`. The
@@ -532,7 +534,8 @@ This depends only on the log as shown to that phone, so it does not break I2.
 
 **F15. A backup that reacts to arrivals is an oracle.** Refreshing the backup when a card
 arrives would tell the server who just received one, and pair that person with whoever
-posted it. *Fix:* backups refresh only on the player's own actions and on public events.
+posted it. *Fix:* backups refresh only when the player sends something and on public events.
+Changing a guess does not count, since that often follows a card.
 
 **F18. Non-extractable is weaker than it sounds.** The personal link has to stay
 re-showable, so its secret sits in IndexedDB. Script in the page can read it. *Accepted

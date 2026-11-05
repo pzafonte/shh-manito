@@ -1,0 +1,5 @@
+do-hyeon-subset.woff2 is a subset of Do Hyeon, Copyright (c) Woowa Brothers.
+gamja-flower-subset.woff2 is a subset of Gamja Flower, Copyright (c) YoonDesign Inc.
+
+Both are licensed under the SIL Open Font License, Version 1.1:
+https://openfontlicense.org

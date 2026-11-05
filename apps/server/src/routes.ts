@@ -16,7 +16,7 @@ import type { RoundStore, StoredRound } from './rounds.js';
 const TOKEN_HEADER = 'x-round-token';
 const MAX_REVEAL_AHEAD_MS = 60 * 24 * 60 * 60 * 1000;
 const BASE64URL = /^[A-Za-z0-9_-]+$/;
-const NEW_ROUNDS_PER_HOUR = 30;
+export const NEW_ROUNDS_PER_HOUR = 30;
 
 const base64 = (maxBytes: number) => z.string().max(Math.ceil((maxBytes * 4) / 3)).regex(BASE64URL);
 const roundIdSchema = z.string().refine(isRoundId);
@@ -66,14 +66,19 @@ function invalid(reply: FastifyReply): FastifyReply {
   return reply.code(400).send({ error: 'invalid' });
 }
 
-export function registerRoutes(app: FastifyInstance, store: RoundStore, clock: Clock): void {
+export function registerRoutes(
+  app: FastifyInstance,
+  store: RoundStore,
+  clock: Clock,
+  newRoundsPerHour = NEW_ROUNDS_PER_HOUR,
+): void {
   const authorisedRound = (request: FastifyRequest, id: string): StoredRound | null | 'refused' => {
     const round = store.find(id);
     if (!round) return null;
     return isAuthorised(request, round) ? round : 'refused';
   };
 
-  app.post('/api/rounds', { config: { rateLimit: { max: NEW_ROUNDS_PER_HOUR, timeWindow: '1 hour' } } }, (request, reply) => {
+  app.post('/api/rounds', { config: { rateLimit: { max: newRoundsPerHour, timeWindow: '1 hour' } } }, (request, reply) => {
     const parsed = createRoundBody.safeParse(request.body);
     if (!parsed.success) return invalid(reply);
     const { id, authHash, ...schedule } = parsed.data;

@@ -45,6 +45,8 @@ export class PlayerClient {
   state: RoundState;
   inbox: InboxView = emptyInbox();
   target: Player | null = null;
+  offline = false;
+  synced = false;
 
   private constructor(
     readonly local: LocalPlayer,
@@ -229,6 +231,7 @@ export class PlayerClient {
       this.#lastSeq = Math.max(this.#lastSeq, ...page.entries.map((entry) => entry.seq));
     }
     await this.#refold();
+    this.synced = true;
   }
 
   async #refold(): Promise<void> {
@@ -254,8 +257,10 @@ export class PlayerClient {
       if (events.length > 0) await this.store.save(this.local);
       await this.flush();
       await this.#refreshBackup();
+      this.offline = false;
     } catch (error) {
       if (!(error instanceof OfflineError)) throw error;
+      this.offline = true;
     }
   }
 
@@ -411,15 +416,11 @@ export class PlayerClient {
     return this.#sendSettlement('got', {});
   }
 
+  // Stays on the phone and rides along with the next backup. Guesses tend to change
+  // just after a card arrives, so saving one at once would hint at who received it.
   async setGuess(fp: string | null): Promise<void> {
     this.local.guess = fp;
-    this.local.backupDirty = true;
     await this.store.save(this.local);
-    try {
-      await this.#refreshBackup();
-    } catch (error) {
-      if (!(error instanceof OfflineError)) throw error;
-    }
   }
 
   async #postGroup(event: GroupEvent): Promise<void> {

@@ -62,9 +62,9 @@ describe('personal links', () => {
     const sender = players[0]!;
     const target = players.find(({ client }) => client.local.fp === sender.client.target!.fp)!;
     const senderOfCard = players.find(({ client }) => client.target?.fp === sender.client.local.fp)!;
+    await sender.client.setGuess(target.client.local.fp);
     await sender.client.sendCard('coffee', '300', NOW);
     await senderOfCard.client.sendCard('smile', '200', NOW);
-    await sender.client.setGuess(target.client.local.fp);
     server.now = NOW + DAY_MS;
     await settle(server, players);
 
@@ -74,6 +74,17 @@ describe('personal links', () => {
     expect(restored.inbox.cards.map((card) => card.card)).toEqual(['smile']);
     expect(restored.promisedTotal).toBe(300n);
     expect(restored.local.guess).toBe(target.client.local.fp);
+  });
+
+  it('changing a guess causes no network activity at all (F15)', async () => {
+    const server = new FakeServer();
+    const players = await drawnRound(server, 4);
+    const { client } = players[0]!;
+    const { handle } = await deriveBackupSecrets(client.local.roundId, client.local.meSecret);
+    const before = server.backups.get(handle);
+    await client.setGuess(players[1]!.client.local.fp);
+    await settle(server, players);
+    expect(server.backups.get(handle)).toBe(before);
   });
 
   it('a wrong secret finds nothing', async () => {

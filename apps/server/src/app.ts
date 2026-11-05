@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
-import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
+import Fastify, { LogController, type FastifyError, type FastifyInstance } from 'fastify';
 import { systemClock, type Clock } from './clock.js';
 import type { Db } from './db.js';
 import { loggerOptions, type LogStream } from './logging.js';
@@ -30,6 +30,7 @@ export interface AppOptions {
   // A number of hops to trust. Off by default, so an address cannot be spoofed.
   trustProxy?: number;
   https?: boolean;
+  newRoundsPerHour?: number;
 }
 
 export interface BuiltApp {
@@ -57,7 +58,7 @@ export async function buildApp(options: AppOptions): Promise<BuiltApp> {
 
   const app = Fastify({
     logger: loggerOptions(options.logStream),
-    disableRequestLogging: true,
+    logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: BODY_LIMIT_BYTES,
     trustProxy: proxyTrust(options.trustProxy),
   });
@@ -102,7 +103,7 @@ export async function buildApp(options: AppOptions): Promise<BuiltApp> {
   });
 
   app.get('/healthz', async () => ({ status: 'ok' }));
-  registerRoutes(app, store, clock);
+  registerRoutes(app, store, clock, options.newRoundsPerHour);
 
   const webRoot = options.webRoot ?? DEFAULT_WEB_ROOT;
   if (existsSync(webRoot)) {
