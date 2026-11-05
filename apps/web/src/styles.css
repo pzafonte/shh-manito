@@ -528,7 +528,7 @@ select {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(3.75rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
   gap: 0.35rem;
 }
 
@@ -648,6 +648,17 @@ select {
 .pill input:focus-visible + span {
   outline: 3px solid var(--night-line);
   outline-offset: 2px;
+}
+
+/* The send button stays in reach however long the card list gets at large text. */
+.send-bar {
+  position: sticky;
+  bottom: 0.5rem;
+  z-index: 1;
+}
+
+.send-bar .btn:disabled {
+  background: var(--card);
 }
 
 .sent {

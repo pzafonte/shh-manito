@@ -438,8 +438,12 @@ export function RevealTab({ game, onOpen }: { game: GameHandle; onOpen(client: P
           )}
           {client.state.reveals.length < total && <p className="note">{reveal.lostNote}</p>}
           {client.satsOn && <Settle game={game} />}
-          <Thanks game={game} />
-          <Keepsake game={game} />
+          {(client.hasRevealed || client.giver) && (
+            <>
+              <Thanks game={game} />
+              <Keepsake game={game} />
+            </>
+          )}
           <PlayAgain game={game} onOpen={onOpen} />
         </>
       )}

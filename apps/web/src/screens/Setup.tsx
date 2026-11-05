@@ -1,5 +1,5 @@
 import { MIN_PLAYERS, type Player } from '@shh-manito/protocol';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { absoluteLink, copyText, shareText } from '../browser';
 import { Bag, CopyButton, InAppNotice, QrCode, Sticker } from '../components';
 import { CHECK_WORDS } from '../copy';
@@ -7,11 +7,38 @@ import type { GameHandle } from '../game';
 import { useCopy, useLanguage } from '../i18n';
 import { PersonalLinkPanel } from './Overlays';
 
+// Most waits end by themselves in a second or two. Offering to remove a friend
+// straight away invites removing someone who was only just about to arrive.
+const NUDGE_AFTER_MS = 4_000;
+const REMOVE_AFTER_MS = 12_000;
+
 function namesOf(players: readonly Player[], fps: readonly string[]): string {
   return fps
     .map((fp) => players.find((player) => player.fp === fp)?.nickname)
     .filter(Boolean)
     .join(', ');
+}
+
+function useStalled(key: string, afterMs: number): boolean {
+  const [stalledKey, setStalledKey] = useState<string | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => setStalledKey(key), afterMs);
+    return () => clearTimeout(timer);
+  }, [key, afterMs]);
+  return stalledKey === key;
+}
+
+function StallHelp({ game, waitingOn }: { game: GameHandle; waitingOn: readonly string[] }): ReactNode {
+  const key = waitingOn.join();
+  const nudge = useStalled(key, NUDGE_AFTER_MS);
+  const remove = useStalled(key, REMOVE_AFTER_MS);
+  if (!game.client.isOrganiser || waitingOn.length === 0) return null;
+  return (
+    <>
+      {nudge && <NudgeButton game={game} waitingOn={waitingOn} />}
+      {remove && <RemoveControls game={game} waitingOn={waitingOn} />}
+    </>
+  );
 }
 
 function NudgeButton({ game, waitingOn }: { game: GameHandle; waitingOn: readonly string[] }): ReactNode {
@@ -148,17 +175,13 @@ export function Check({ game }: { game: GameHandle }): ReactNode {
 
   if (!view?.words) {
     const waitingOn = view?.waitingOn ?? [];
+    const others = waitingOn.filter((fp) => fp !== client.local.fp);
     return (
       <>
         <Bag busy />
         <h1>{check.preparing}</h1>
-        {waitingOn.length > 0 && <p role="status">{check.waitingFor(namesOf(client.state.roster, waitingOn))}</p>}
-        {client.isOrganiser && waitingOn.length > 0 && (
-          <>
-            <NudgeButton game={game} waitingOn={waitingOn} />
-            <RemoveControls game={game} waitingOn={waitingOn} />
-          </>
-        )}
+        {others.length > 0 && <p role="status">{check.waitingFor(namesOf(client.state.roster, others))}</p>}
+        <StallHelp game={game} waitingOn={others} />
       </>
     );
   }
@@ -209,15 +232,16 @@ function drawLine(game: GameHandle, copy: ReturnType<typeof useCopy>): string {
   const { client } = game;
   const view = client.state.current;
   if (!view) return copy.draw.getting;
-  const names = namesOf(client.state.roster, view.waitingOn);
+  const others = view.waitingOn.filter((fp) => fp !== client.local.fp);
+  const names = namesOf(client.state.roster, others);
   switch (view.stage) {
     case 'mixing':
-      return view.waitingOn.includes(client.local.fp) ? copy.draw.myTurn : copy.draw.turn(names);
+      return others.length === 0 ? copy.draw.myTurn : copy.draw.turn(names);
     case 'slips':
     case 'ready':
       return copy.draw.wrapping;
     default:
-      return view.waitingOn.length > 0 ? copy.draw.waitingFor(names) : copy.draw.getting;
+      return others.length > 0 ? copy.draw.waitingFor(names) : copy.draw.getting;
   }
 }
 
@@ -229,7 +253,7 @@ export function Draw({ game }: { game: GameHandle }): ReactNode {
   const roster = client.state.roster;
   const mixed = view?.stage === 'mixing' ? view.mixStep : view && view.mixStep > 0 ? roster.length : 0;
   const failed = client.state.failures > 0;
-  const waitingOn = view?.waitingOn ?? [];
+  const others = (view?.waitingOn ?? []).filter((fp) => fp !== client.local.fp);
 
   return (
     <>
@@ -251,12 +275,7 @@ export function Draw({ game }: { game: GameHandle }): ReactNode {
         })}
       </ol>
       <p className="note">{draw.keepOpen}</p>
-      {client.isOrganiser && waitingOn.length > 0 && (
-        <>
-          <NudgeButton game={game} waitingOn={waitingOn} />
-          <RemoveControls game={game} waitingOn={waitingOn} />
-        </>
-      )}
+      <StallHelp game={game} waitingOn={others} />
     </>
   );
 }

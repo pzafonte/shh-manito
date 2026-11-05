@@ -213,6 +213,7 @@ test('the organiser can nudge and remove someone who never opens the link', asyn
   const organiser = phones[0]!.page;
   await phones[4]!.page.close();
   await organiser.getByRole('button', { name: ko.waiting.lock }).click();
+  await expect(organiser.getByRole('button', { name: ko.draw.remove('Ivy') })).toHaveCount(0);
   await expect(organiser.getByRole('button', { name: ko.draw.nudge })).toBeVisible();
   await organiser.getByRole('button', { name: ko.draw.nudge }).click();
   await expect(organiser.getByText(ko.draw.nudged)).toBeVisible();

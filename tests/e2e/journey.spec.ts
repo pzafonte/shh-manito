@@ -112,7 +112,7 @@ test('a full game in Korean on four phones, from creating the round through sett
   for (const { page } of phones) {
     await expect(page.getByRole('link', { name: ko.settle.payOpen })).toHaveAttribute('href', 'lightning:friend@example.com');
     await page.getByRole('button', { name: ko.settle.paid, exact: true }).click();
-    await expect(page.getByText(ko.settle.paidDone)).toBeVisible();
+    await expect(page.getByText(ko.settle.paidDone, { exact: true })).toBeVisible();
   }
   await shot(phones[0]!.page, 'journey-07-paid');
   for (const { page } of phones) {

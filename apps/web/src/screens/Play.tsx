@@ -4,7 +4,6 @@ import { formatSats, formatTime } from '../browser';
 import { Bag, Slip } from '../components';
 import type { GameHandle } from '../game';
 import { useCopy, useLanguage } from '../i18n';
-import { PersonalLinkPanel } from './Overlays';
 
 export type Tab = 'home' | 'draw' | 'send' | 'inbox' | 'reveal';
 
@@ -21,7 +20,17 @@ export function useNow(): number {
   return now;
 }
 
-export function Home({ game, unread, onTab }: { game: GameHandle; unread: number; onTab(tab: Tab): void }): ReactNode {
+export function Home({
+  game,
+  unread,
+  onTab,
+  onPersonal,
+}: {
+  game: GameHandle;
+  unread: number;
+  onTab(tab: Tab): void;
+  onPersonal(): void;
+}): ReactNode {
   const copy = useCopy();
   const { home } = copy;
   const { language } = useLanguage();
@@ -62,7 +71,14 @@ export function Home({ game, unread, onTab }: { game: GameHandle; unread: number
       <button type="button" className="btn" onClick={() => onTab(action.tab)}>
         {action.label}
       </button>
-      {!summary.linkSaved && <PersonalLinkPanel game={game} />}
+      {!summary.linkSaved && (
+        <section className="panel panel-warm">
+          <p>{copy.personal.remind}</p>
+          <button type="button" className="btn btn-quiet" onClick={onPersonal}>
+            {copy.personal.remindOpen}
+          </button>
+        </section>
+      )}
     </>
   );
 }
@@ -256,9 +272,12 @@ export function SendTab({ game }: { game: GameHandle }): ReactNode {
           </fieldset>
         )}
         <p className="note">{send.why}</p>
-        <button type="submit" className="btn" disabled={!card || busy}>
-          {send.submit}
-        </button>
+        <div className="send-bar">
+          <button type="submit" className="btn" disabled={!card || busy}>
+            {send.submit}
+          </button>
+        </div>
+        {!card && !result && <p className="note">{send.pickFirst}</p>}
         <div aria-live="polite">{result && <p className={result.good ? 'sent' : 'banner'}>{result.text}</p>}</div>
       </form>
       <Ideas />

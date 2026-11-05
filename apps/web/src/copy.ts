@@ -39,7 +39,7 @@ const ko = {
 
   create: {
     title: '새 마니또 만들기',
-    roundName: '이름',
+    roundName: '이번 마니또의 이름',
     defaultName: '우리들의 마니또',
     nickname: '내 별명',
     sticker: '내 동물 스티커',
@@ -55,7 +55,7 @@ const ko = {
   },
 
   join: {
-    invitedTo: (name: string) => `‘${name}’ 마니또에 초대받았어요`,
+    invitedTo: (name: string) => `‘${name}’에 초대받았어요`,
     explain: '이름을 몰래 뽑아 일주일 동안 챙겨 주고, 마지막 날 서로 공개해요.',
     nickname: '별명',
     nicknameHint: '친구들이 알아볼 수 있는 이름이면 돼요.',
@@ -110,7 +110,7 @@ const ko = {
     waitOrganiser: (name: string) => `${name}님이 시작하면 바로 넘어가요.`,
     you: '나',
     organiser: '만든 사람',
-    shareText: (name: string) => `‘${name}’ 마니또 같이 해요! 링크를 열고 별명만 쓰면 돼요.`,
+    shareText: (name: string) => `‘${name}’ 같이 해요! 링크를 열고 별명만 쓰면 돼요.`,
   },
 
   personal: {
@@ -122,6 +122,8 @@ const ko = {
     copy: '링크 복사',
     copied: '복사했어요',
     done: '저장했어요',
+    remind: '개인 링크를 아직 저장하지 않았어요',
+    remindOpen: '지금 저장하기',
     shareText: '내 마니또 개인 링크예요. 다른 사람에게 보내지 마세요.',
   },
 
@@ -159,8 +161,8 @@ const ko = {
     nudgeText: (names: string, link: string) =>
       `${names}님, 주머니가 기다리고 있어요! 링크를 열어 주면 바로 다음으로 넘어가요. ${link}`,
     removeTitle: '오지 못하는 친구가 있나요?',
-    removeHint: '빼고 다시 시작하면 남은 사람끼리 새로 뽑아요.',
-    remove: (name: string) => `${name}님 빼고 다시 뽑기`,
+    removeHint: '빼면 남은 사람끼리 이어서 해요.',
+    remove: (name: string) => `${name}님 빼고 계속하기`,
     removeConfirm: (name: string) => `${name}님을 정말 뺄까요?`,
     removeYes: '네, 뺄게요',
     removeNo: '아니요',
@@ -207,11 +209,12 @@ const ko = {
   send: {
     title: '내 사람에게 카드 보내기',
     pickCard: '카드 고르기',
+    pickFirst: '카드를 고르면 보낼 수 있어요.',
     pickAmount: '약속',
     noPromise: '약속 없이',
     amount: (sats: string) => `${sats} 사토시`,
     left: (sats: string) => `남은 약속 한도 ${sats} 사토시`,
-    why: '카드 문구가 정해져 있어서 말투로 들킬 일도, 익명으로 상처 줄 일도 없어요.',
+    why: '카드 문구가 정해져 있어서 말투로 들킬 일도, 몰래 상처 줄 일도 없어요.',
     submit: '몰래 보내기',
     sent: (time: string) => `보냈어요. ${time}에 도착해요.`,
     queued: '저장했어요. 인터넷이 돌아오면 알아서 보낼게요.',
@@ -244,7 +247,7 @@ const ko = {
     from: '내 마니또가',
     promise: (sats: string) => `${sats} 사토시 약속`,
     postedAt: (time: string) => `${time} 배달`,
-    postman: (times: string) => `우체부는 하루 세 번, ${times}에 와요`,
+    postman: (times: string) => `우체부는 ${times}에 와요`,
     guess: '누구일 것 같나요?',
     guessNone: '아직 모르겠어요',
     guessNote: '내 추측은 이 휴대폰 밖으로 나가지 않아요.',
@@ -279,7 +282,7 @@ const ko = {
     gettingTitle: '내가 받을 약속',
     promisedToYou: (sats: string) => `내 마니또가 ${sats} 사토시를 약속했어요`,
     detailLabel: '라이트닝 주소나 인보이스',
-    detailHint: '내 마니또에게만 전해져요.',
+    detailHint: '지갑 앱의 ‘받기’ 화면에서 찾을 수 있어요. 내 마니또에게만 전해져요.',
     detailSend: '내 마니또에게 알려 주기',
     detailBad: '라이트닝 주소(이름@도메인)나 인보이스(ln으로 시작) 모양이 아니에요. 다시 확인해 주세요.',
     detailSent: '알려 줬어요.',
@@ -457,7 +460,7 @@ const en: Copy = {
 
   create: {
     title: 'Start a new round',
-    roundName: 'Round name',
+    roundName: 'Name of this round',
     defaultName: 'Our Manito',
     nickname: 'Your nickname',
     sticker: 'Your animal sticker',
@@ -539,6 +542,8 @@ const en: Copy = {
     copy: 'Copy link',
     copied: 'Copied',
     done: "I've saved it",
+    remind: "You haven't saved your personal link yet",
+    remindOpen: 'Save it now',
     shareText: 'My manito personal link. Do not send this to anyone else.',
   },
 
@@ -575,8 +580,8 @@ const en: Copy = {
     nudged: 'Copied. Paste it into your group chat.',
     nudgeText: (names, link) => `${names}, the bag is waiting for you! Open the link and it will move on. ${link}`,
     removeTitle: "Someone can't make it?",
-    removeHint: 'Remove them and everyone else draws again.',
-    remove: (name) => `Remove ${name} and draw again`,
+    removeHint: 'Remove them and everyone else carries on.',
+    remove: (name) => `Remove ${name} and carry on`,
     removeConfirm: (name) => `Remove ${name}?`,
     removeYes: 'Yes, remove them',
     removeNo: 'Not yet',
@@ -626,6 +631,7 @@ const en: Copy = {
   send: {
     title: 'Send your person a card',
     pickCard: 'Pick a card',
+    pickFirst: 'Pick a card and you can send it.',
     pickAmount: 'Promise',
     noPromise: 'No promise',
     amount: (sats) => `${sats} sats`,
@@ -697,7 +703,7 @@ const en: Copy = {
     gettingTitle: 'Promised to you',
     promisedToYou: (sats) => `Your secret friend promised ${sats} sats`,
     detailLabel: 'Lightning address or invoice',
-    detailHint: 'Only your secret friend will see this.',
+    detailHint: "You'll find it under Receive in your wallet app. Only your secret friend will see it.",
     detailSend: 'Tell your secret friend',
     detailBad: "That doesn't look like a Lightning address (name@domain) or an invoice (starts with ln). Please check it.",
     detailSent: 'Sent to your secret friend.',

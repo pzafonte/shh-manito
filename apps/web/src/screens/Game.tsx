@@ -33,7 +33,15 @@ function TabBar({ tab, onTab, unread }: { tab: Tab; onTab(tab: Tab): void; unrea
   );
 }
 
-function Playing({ game, onOpen }: { game: GameHandle; onOpen(client: PlayerClient): void }): ReactNode {
+function Playing({
+  game,
+  onOpen,
+  onPersonal,
+}: {
+  game: GameHandle;
+  onOpen(client: PlayerClient): void;
+  onPersonal(): void;
+}): ReactNode {
   const { client, summary } = game;
   const [tab, setTab] = useState<Tab>('home');
   const unread = Math.max(0, client.inbox.cards.length - summary.cardsSeen);
@@ -45,7 +53,7 @@ function Playing({ game, onOpen }: { game: GameHandle; onOpen(client: PlayerClie
   return (
     <>
       <TabBar tab={tab} onTab={setTab} unread={unread} />
-      {tab === 'home' && <Home game={game} unread={unread} onTab={setTab} />}
+      {tab === 'home' && <Home game={game} unread={unread} onTab={setTab} onPersonal={onPersonal} />}
       {tab === 'draw' && <DrawTab game={game} />}
       {tab === 'send' && <SendTab game={game} />}
       {tab === 'inbox' && <InboxTab game={game} />}
@@ -54,7 +62,15 @@ function Playing({ game, onOpen }: { game: GameHandle; onOpen(client: PlayerClie
   );
 }
 
-function Phase({ game, onOpen }: { game: GameHandle; onOpen(client: PlayerClient): void }): ReactNode {
+function Phase({
+  game,
+  onOpen,
+  onPersonal,
+}: {
+  game: GameHandle;
+  onOpen(client: PlayerClient): void;
+  onPersonal(): void;
+}): ReactNode {
   const { client } = game;
   switch (client.phase) {
     case 'gathering':
@@ -66,7 +82,7 @@ function Phase({ game, onOpen }: { game: GameHandle; onOpen(client: PlayerClient
     case 'stuck':
       return <Stuck game={game} onOpen={onOpen} />;
     case 'playing':
-      return <Playing game={game} onOpen={onOpen} />;
+      return <Playing game={game} onOpen={onOpen} onPersonal={onPersonal} />;
   }
 }
 
@@ -151,7 +167,7 @@ export function Game({
   } else if (client.membership === 'waiting' && client.local.outbox.length === 0) {
     body = <LostName game={game} />;
   } else {
-    body = <Phase game={game} onOpen={onOpen} />;
+    body = <Phase game={game} onOpen={onOpen} onPersonal={() => setOverlay('personal')} />;
   }
 
   return (

@@ -34,6 +34,7 @@ export default tseslint.config(
   },
   {
     files: ['apps/web/src/**'],
+    ignores: ['apps/web/src/**/*.test.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: ['node:*', 'better-sqlite3', 'fastify'] }],
       'no-restricted-globals': [
