@@ -296,13 +296,17 @@ select {
 .sticker-option {
   position: relative;
   display: grid;
-  place-items: center;
   min-height: 3.25rem;
+  cursor: pointer;
+}
+
+.sticker-face {
+  display: grid;
+  place-items: center;
   border: 2px solid var(--ink);
   border-radius: 0.75rem;
   background: var(--card);
   font-size: 1.6rem;
-  cursor: pointer;
 }
 
 .sticker-option input {
@@ -313,12 +317,12 @@ select {
   cursor: pointer;
 }
 
-.sticker-option:has(input:checked) {
+.sticker-option input:checked + .sticker-face {
   background: var(--marker);
   box-shadow: 0 0 0 2px var(--ink);
 }
 
-.sticker-option:has(input:focus-visible) {
+.sticker-option input:focus-visible + .sticker-face {
   outline: 3px solid var(--night-line);
   outline-offset: 2px;
 }

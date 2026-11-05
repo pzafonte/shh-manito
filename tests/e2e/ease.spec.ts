@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  auditBothLanguages,
   createRound,
   en,
   expectNoSidewaysScroll,
@@ -22,6 +23,32 @@ const FIRST_LOAD_BUDGET_BYTES = 300 * 1024;
 
 test.beforeEach(async () => {
   await setServerClock(0);
+});
+
+test('the screens before a game starts pass the shared rules in both languages', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const visitor = await newPhone(browser, 'Visitor');
+  await visitor.page.goto('/');
+  await expect(visitor.page.getByRole('button', { name: ko.landing.start })).toBeVisible();
+  await auditBothLanguages(visitor.page, 'landing', true);
+
+  await visitor.page.getByRole('button', { name: ko.landing.howTo }).click();
+  await auditBothLanguages(visitor.page, 'how to play, no round', true);
+  await visitor.page.getByRole('button', { name: ko.menu.close }).click();
+
+  await visitor.page.getByRole('button', { name: ko.landing.start }).click();
+  await auditBothLanguages(visitor.page, 'create', false);
+
+  const { phones, link } = await gather(browser, ['Kim', 'Lee', 'Park', 'Choi']);
+  const guest = await newPhone(browser, 'Guest');
+  await guest.page.goto(link);
+  await expect(guest.page.getByLabel(ko.join.nickname)).toBeVisible();
+  await auditBothLanguages(guest.page, 'join', true);
+
+  await lockAndAgree(phones);
+  await guest.page.reload();
+  await expect(guest.page.getByRole('heading', { name: ko.noKeys.title })).toBeVisible();
+  await auditBothLanguages(guest.page, 'no keys', true);
 });
 
 test('joining takes one text field and two taps', async ({ browser }) => {

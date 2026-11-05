@@ -8,7 +8,7 @@ import type { Db } from './db.js';
 export const MAX_ROUND_ENTRIES = 6_000;
 export const MAX_ROUND_BYTES = 48 * 1024 * 1024;
 export const MAX_BACKUPS_PER_ROUND = 64;
-const PAGE_SIZE = 500;
+export const PAGE_SIZE = 500;
 
 interface RoundRow {
   id: string;
@@ -146,14 +146,17 @@ export class RoundStore {
     release.immediate();
   }
 
-  entriesAfter(roundId: string, after: number): StoredEntry[] {
+  entriesAfter(roundId: string, after: number): { entries: StoredEntry[]; more: boolean } {
     const rows = this.db
       .prepare(
         `SELECT seq, kind, body, visible_at FROM entries
          WHERE round_id = ? AND seq > ? ORDER BY seq LIMIT ?`,
       )
-      .all(roundId, after, PAGE_SIZE) as EntryRow[];
-    return rows.map((row) => ({ seq: row.seq, kind: row.kind, body: row.body, visibleAt: row.visible_at }));
+      .all(roundId, after, PAGE_SIZE + 1) as EntryRow[];
+    const entries = rows
+      .slice(0, PAGE_SIZE)
+      .map((row) => ({ seq: row.seq, kind: row.kind, body: row.body, visibleAt: row.visible_at }));
+    return { entries, more: rows.length > PAGE_SIZE };
   }
 
   putBackup(handle: string, roundId: string, blob: Buffer): boolean {

@@ -80,7 +80,7 @@ reveal `groupKey`.
 | Mix | ECDH | One attempt, deleted after peeling | **Never** |
 | Box | ECDH + ECDSA pair | One attempt | Yes |
 | Seed | 32 random bytes | One attempt | Yes |
-| Check nonce | 32 random bytes | One check version | No |
+| Check nonce | 32 random bytes | One check version | Yes |
 
 The identity key is signing only. The first draft also gave players a long-term
 ECDH identity key for onion layers. That is gone (finding F3).
@@ -143,7 +143,9 @@ from anything a player can see (finding F8).
 parses every group event, verifies signatures, and derives the round state. Two
 clients with the same entries reach the same state. Conflicts inside a step
 resolve to the first event in log order. Anything invalid is skipped; the fold
-never throws on bad input.
+never throws on bad input. A client reads to the end of the log before it folds or
+acts, because the start of a finished draw looks like a draw still running (finding
+F25).
 
 ## 5. Round setup
 
@@ -529,6 +531,16 @@ before the next removal is applied, so an agreed version ends the check for good
 shown a different entry saw the attempt fail and moved on, while the others waited for
 it forever. *Fix:* such a phone reports the failure, which ends the attempt for everyone.
 This depends only on the log as shown to that phone, so it does not break I2.
+
+**F25. Acting on part of the log.** Found by reading the code. The server pages the log.
+A phone reloading a long round could fold the first page, take it for a draw in progress
+and answer it, posting a stray `abort` for a key it no longer holds. *Fix:* the server
+says when more remains, and a client reads to the end before folding or acting.
+
+**F26. A restore during the check stalled everyone.** Found by reading the code. The check
+nonce was not in the backup, so a restored phone could only reveal a nonce that matched
+nothing. *Fix:* the nonce is backed up when it is made. It only needs hiding until every
+commitment is in, and the backup is encrypted.
 
 ### Backups and metadata
 

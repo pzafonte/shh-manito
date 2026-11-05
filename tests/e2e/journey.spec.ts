@@ -115,6 +115,7 @@ test('a full game in Korean on four phones, from creating the round through sett
     await expect(page.getByText(ko.settle.paidDone, { exact: true })).toBeVisible();
   }
   await shot(phones[0]!.page, 'journey-07-paid');
+  await auditBothLanguages(phones[0]!.page, 'settling', false);
   for (const { page } of phones) {
     await page.getByRole('button', { name: ko.settle.gotIt, exact: true }).click();
     await expect(page.getByText(ko.settle.gotDone, { exact: true })).toBeVisible();

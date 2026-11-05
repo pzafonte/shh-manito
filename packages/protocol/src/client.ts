@@ -10,7 +10,7 @@ import { emptyInbox, ParcelReader, type InboxView } from './inbox.js';
 import { deriveBackupSecrets, deriveRoundSecrets, formatLink, hashAuthToken, newRoundId, newSecret, type RoundSecrets } from './links.js';
 import { buildBackup, newLocalPlayer, restoreLocalPlayer, type LocalPlayer } from './local.js';
 import { parseSats, satsEnabled, sumSats } from './money.js';
-import { OfflineError, type Schedule, type Transport } from './transport.js';
+import { OfflineError, readToEnd, type Schedule, type Transport } from './transport.js';
 
 export interface PlayerStore {
   save(local: LocalPlayer): Promise<void>;
@@ -66,7 +66,7 @@ export class PlayerClient {
     makeTransport: TransportFactory,
   ): Promise<RoundState> {
     const secrets = await deriveRoundSecrets(roundId, inviteSecret);
-    const page = await makeTransport(roundId, secrets.authToken).fetchSince(0);
+    const page = await readToEnd(makeTransport(roundId, secrets.authToken), 0);
     return new LogFolder(roundId, secrets.groupKey).fold(page.entries);
   }
 
@@ -224,7 +224,7 @@ export class PlayerClient {
   }
 
   async sync(): Promise<void> {
-    const page = await this.transport.fetchSince(this.#lastSeq);
+    const page = await readToEnd(this.transport, this.#lastSeq);
     this.#schedule = page.schedule;
     if (page.entries.length > 0) {
       this.#entries = [...this.#entries, ...page.entries];

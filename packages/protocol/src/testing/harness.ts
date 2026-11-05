@@ -35,6 +35,7 @@ export class FakeServer {
   rewritePost: PostRewrite = (_who, entry) => Promise.resolve([entry]);
   rewriteView: ViewRewrite = (_who, entries) => entries;
   polls = new Map<string, number>();
+  pageSize = Number.POSITIVE_INFINITY;
 
   #append(kind: LogEntry['kind'], body: Bytes, visibleAt: number | null): void {
     this.log.push({ seq: this.log.length + 1, kind, body, visibleAt });
@@ -73,7 +74,7 @@ export class FakeServer {
         this.polls.set(who, (this.polls.get(who) ?? 0) + 1);
         this.releaseMail();
         const entries = this.rewriteView(who, this.log).filter((entry) => entry.seq > after);
-        return { schedule: this.schedule!, entries };
+        return { schedule: this.schedule!, entries: entries.slice(0, this.pageSize), more: entries.length > this.pageSize };
       },
       putBackup: async (handle, blob) => {
         reachable();

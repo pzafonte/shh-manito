@@ -107,6 +107,35 @@ describe('personal links', () => {
     expect(await restore(server, players[0]!)).toBeNull();
   });
 
+  it('restoring during the check carries on with the same words', async () => {
+    const server = new FakeServer();
+    const players = await openRound(server, 4);
+    await settle(server, players);
+    await organiser(players).lock();
+    const mover = players[3]!;
+    for (let pass = 0; pass < 10 && !mover.client.local.check?.committed; pass++) await mover.client.tick();
+    await mover.client.tick();
+    expect(organiser(players).state.check?.words ?? null).toBeNull();
+
+    const restored = (await restore(server, mover))!;
+    const survivors = [...players.slice(0, 3), { ...mover, client: restored }];
+    await settle(server, survivors);
+    expect(restored.state.check!.words).toEqual(organiser(players).state.check!.words);
+    expect(organiser(players).state.check!.words).not.toBeNull();
+  });
+
+  it('never acts on part of the log after a reload (F25)', async () => {
+    const server = new FakeServer();
+    const players = await drawnRound(server, 4);
+    const before = server.log.length;
+    server.pageSize = 5;
+    const restored = (await restore(server, players[2]!))!;
+    await restored.tick();
+    expect(server.log).toHaveLength(before);
+    expect(restored.state.final?.circleHash).toBe(organiser(players).state.final!.circleHash);
+    expect(restored.target?.fp).toBe(players[2]!.client.target!.fp);
+  });
+
   it('restoring mid-draw without a mix key restarts the attempt safely', async () => {
     const server = new FakeServer();
     const players = await openRound(server, 4);

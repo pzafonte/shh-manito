@@ -61,6 +61,7 @@ async function advanceCheck(state: RoundState, local: LocalPlayer): Promise<Grou
 
   if (local.check?.version !== view.version) {
     local.check = { version: view.version, nonce: toB64(randomBytes(32)), committed: false, revealed: false };
+    local.backupDirty = true;
   }
   const check = local.check;
   const key = local.identity.privateKey;

@@ -158,6 +158,7 @@ interface BackupContent {
   inviteSecret: string;
   fp: string;
   keyring: string;
+  check: LocalCheck | null;
   sent: SentCard[];
   guess: string | null;
   settlement: Settlement;
@@ -169,6 +170,7 @@ export async function buildBackup(local: LocalPlayer): Promise<{ handle: string;
     inviteSecret: local.inviteSecret,
     fp: local.fp,
     keyring: local.keyring,
+    check: local.check,
     sent: local.sent,
     guess: local.guess,
     settlement: local.settlement,
@@ -192,7 +194,7 @@ export async function restoreLocalPlayer(
     fp: content.fp,
     identity: await signingPair(ring.identity),
     keyring: content.keyring,
-    check: null,
+    check: content.check && { ...content.check, committed: false, revealed: false },
     attempt: ring.attempt && {
       number: ring.attempt.number,
       mix: null,

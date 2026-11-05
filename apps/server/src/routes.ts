@@ -113,13 +113,17 @@ export function registerRoutes(
     const after = afterSchema.safeParse(request.query.after);
     if (!after.success) return invalid(reply);
     store.releaseDue(round.id);
-    const entries = store.entriesAfter(round.id, after.data).map((entry) => ({
-      seq: entry.seq,
-      kind: entry.kind,
-      body: entry.body.toString('base64url'),
-      visibleAt: entry.visibleAt,
-    }));
-    return reply.send({ schedule: round.schedule, entries });
+    const { entries, more } = store.entriesAfter(round.id, after.data);
+    return reply.send({
+      schedule: round.schedule,
+      entries: entries.map((entry) => ({
+        seq: entry.seq,
+        kind: entry.kind,
+        body: entry.body.toString('base64url'),
+        visibleAt: entry.visibleAt,
+      })),
+      more,
+    });
   });
 
   app.put<{ Params: { handle: string } }>('/api/backups/:handle', (request, reply) => {

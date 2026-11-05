@@ -16,7 +16,7 @@ import {
   zonedTimeToInstant,
 } from '@shh-manito/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_BACKUPS_PER_ROUND, MAX_ROUND_ENTRIES } from '../src/rounds.js';
+import { MAX_BACKUPS_PER_ROUND, MAX_ROUND_ENTRIES, PAGE_SIZE } from '../src/rounds.js';
 import {
   assertSingleCircle,
   DAY_MS,
@@ -84,7 +84,10 @@ async function page(round: { id: string; token: string }, after = 0) {
   const response = await fetch(`${server.baseUrl}/api/rounds/${round.id}/events?after=${after}`, {
     headers: { 'x-round-token': round.token },
   });
-  return (await response.json()) as { entries: { seq: number; kind: string; body: string; visibleAt: number | null }[] };
+  return (await response.json()) as {
+    entries: { seq: number; kind: string; body: string; visibleAt: number | null }[];
+    more: boolean;
+  };
 }
 
 function seoul(day: number, hour: number): number {
@@ -155,6 +158,19 @@ describe('rounds', () => {
     await post(round, { kind: 'sealed', body: parcelBody(), held: false });
     expect((await page(round)).entries.map((entry) => entry.seq)).toEqual([1, 2]);
     expect((await page(round, 1)).entries.map((entry) => entry.seq)).toEqual([2]);
+  });
+
+  it('says when there is more of the log to read', async () => {
+    const round = await newRound();
+    for (let index = 0; index < PAGE_SIZE + 2; index++) {
+      server.store.append(server.store.find(round.id)!, 'sealed', Buffer.alloc(PARCEL_SEALED_BYTES), false);
+    }
+    const first = await page(round);
+    expect(first.entries).toHaveLength(PAGE_SIZE);
+    expect(first.more).toBe(true);
+    const second = await page(round, PAGE_SIZE);
+    expect(second.entries).toHaveLength(2);
+    expect(second.more).toBe(false);
   });
 
   it('sends no cookies and a strict policy on every response', async () => {

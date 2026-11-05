@@ -78,7 +78,9 @@ export function StickerPicker({
       {STICKER_IDS.map((id) => (
         <label key={id} className="sticker-option">
           <input type="radio" name={name} checked={value === id} onChange={() => onChange(id)} aria-label={copy.stickers[id]} />
-          <span aria-hidden="true">{STICKER_EMOJI[id]}</span>
+          <span className="sticker-face" aria-hidden="true">
+            {STICKER_EMOJI[id]}
+          </span>
         </label>
       ))}
     </div>
@@ -155,6 +157,12 @@ export function Slip({ target, unfold = false }: { target: Player | null; unfold
     closer.current = setTimeout(() => setOpen(false), ms);
   };
 
+  const releaseHold = (): void => {
+    if (!held.current) return;
+    held.current = false;
+    close();
+  };
+
   if (!target) return <p className="note">{copy.slip.lost}</p>;
 
   return (
@@ -177,12 +185,8 @@ export function Slip({ target, unfold = false }: { target: Player | null; unfold
           if (Date.now() - pressedAt.current >= LONG_PRESS_MS) close();
           else showFor(PEEK_TAP_MS);
         }}
-        onPointerLeave={() => {
-          if (held.current) {
-            held.current = false;
-            close();
-          }
-        }}
+        onPointerLeave={releaseHold}
+        onPointerCancel={releaseHold}
         onContextMenu={(event) => event.preventDefault()}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {

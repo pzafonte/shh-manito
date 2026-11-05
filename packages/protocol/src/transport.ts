@@ -21,6 +21,7 @@ export interface NewEntry {
 export interface LogPage {
   schedule: Schedule;
   entries: LogEntry[];
+  more: boolean;
 }
 
 export interface Transport {
@@ -29,6 +30,19 @@ export interface Transport {
   fetchSince(after: number): Promise<LogPage>;
   putBackup(handle: string, blob: Bytes): Promise<void>;
   getBackup(handle: string): Promise<Bytes | null>;
+}
+
+// A phone must never act on part of the log. Reading only the start of a finished
+// draw looks exactly like a draw still running, and it would answer as if it were.
+export async function readToEnd(transport: Transport, after: number): Promise<LogPage> {
+  let page = await transport.fetchSince(after);
+  const entries = [...page.entries];
+  while (page.more) {
+    const last = entries.at(-1)?.seq ?? after;
+    page = await transport.fetchSince(last);
+    entries.push(...page.entries);
+  }
+  return { schedule: page.schedule, entries, more: false };
 }
 
 // The network is down or the server did not answer. Work stays queued.
@@ -75,11 +89,8 @@ export function httpTransport(baseUrl: string, roundId: string, authToken: strin
     },
     async fetchSince(after) {
       const response = await send(`/api/rounds/${roundId}/events?after=${after}`, { method: 'GET', headers });
-      const page = (await response.json()) as { schedule: Schedule; entries: WireEntry[] };
-      return {
-        schedule: page.schedule,
-        entries: page.entries.map((entry) => ({ ...entry, body: fromB64(entry.body) })),
-      };
+      const page = (await response.json()) as { schedule: Schedule; entries: WireEntry[]; more: boolean };
+      return { ...page, entries: page.entries.map((entry) => ({ ...entry, body: fromB64(entry.body) })) };
     },
     async putBackup(handle, blob) {
       await send(`/api/backups/${handle}`, {

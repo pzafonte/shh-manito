@@ -89,10 +89,19 @@ export function useGame(client: PlayerClient): GameHandle {
         render();
       },
       act: async <T,>(action: () => Promise<T>): Promise<T> => {
-        const result = await action();
-        render();
-        void run();
-        return result;
+        try {
+          const result = await action();
+          render();
+          void run();
+          return result;
+        } catch (error) {
+          if (!(error instanceof RoundGoneError)) throw error;
+          gone.current = true;
+          render();
+          // The screen has already changed to say the round ended, so whatever
+          // was waiting on this tap has nothing left to do.
+          return new Promise<T>(() => undefined);
+        }
       },
     };
   }, [client]);
