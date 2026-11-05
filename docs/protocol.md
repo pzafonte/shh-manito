@@ -223,8 +223,9 @@ Signed by the organiser. Allowed until an attempt is final and only while at lea
 
 `index` is the number of removals before this one, which gives removals a single
 order. `a` is the attempt it applies to, or 0 during the check. A removal during
-the check starts a new check version with fresh nonces. A removal during attempt
-`a` ends that attempt, unless the target already posted `ready` for it.
+the check starts a new check version with fresh nonces. Once the words are agreed a
+removal with `a` of 0 counts for nothing. A removal during attempt `a` ends that
+attempt, unless the target already posted `ready` for it.
 
 ## 6. The draw
 
@@ -323,6 +324,10 @@ attempt is final.
 **abort.** `{ t:"abort", r, a, from, why, sig }`. Any roster member, at any step.
 For each player, whichever of `ready`, `abort` or being removed comes first in log
 order decides; a later `abort` from someone who already posted `ready` is ignored.
+
+A phone that sees an attempt die from a public fault posts `abort` for it too. If
+the log is honest this is redundant. If the server showed only this phone a bad
+entry, it is the only way the others find out (finding F24).
 
 **Ending an attempt.** A dead attempt is thrown away whole. Each client deletes its
 mix key, box keys and seed for that attempt, and starts attempt `t+1` with fresh
@@ -512,6 +517,16 @@ list fails on signature, then on hash, then on opening.
 
 **F19. Removal as a lever.** A forged or replayed removal could reshape the roster.
 *Fix:* organiser-signed, with `index` and `a` bound, and subject to the 4-player floor.
+
+**F23. A removal could reopen a finished check.** Found by a test while building. An
+organiser could post a removal with `a` of 0 after the draw, which changed the roster,
+invalidated the agreed words and wiped the game. *Fix:* each check version is evaluated
+before the next removal is applied, so an agreed version ends the check for good.
+
+**F24. A forked phone left the group stalled.** Found by a test while building. A phone
+shown a different entry saw the attempt fail and moved on, while the others waited for
+it forever. *Fix:* such a phone reports the failure, which ends the attempt for everyone.
+This depends only on the log as shown to that phone, so it does not break I2.
 
 ### Backups and metadata
 
