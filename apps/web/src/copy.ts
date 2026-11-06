@@ -9,7 +9,7 @@ import type { CardId, StickerId } from '@shh-manito/protocol';
 export type Language = 'ko' | 'en';
 
 const ko = {
-  brand: '쉿! 마니또',
+  brand: '🤫 쉿! 마니또',
   tagline: '이름을 몰래 뽑고, 일주일 동안 그 사람을 챙겨 주는 놀이예요.',
   languageToggle: 'English',
   languageToggleLabel: 'Switch to English',
@@ -430,7 +430,7 @@ const ko = {
 export type Copy = typeof ko;
 
 const en: Copy = {
-  brand: 'Shh Manito',
+  brand: '🤫 Shh Manito',
   tagline: 'Draw a name in secret and look after that person for a week.',
   languageToggle: '한국어',
   languageToggleLabel: '한국어로 바꾸기',
