@@ -45,7 +45,6 @@ export async function tap(phone: Phone, target: ReturnType<Page['getByRole']>): 
 }
 
 export interface RoundOptions {
-  sats?: boolean;
   copy?: Copy;
 }
 
@@ -56,7 +55,6 @@ export async function createRound(phone: Phone, options: RoundOptions = {}): Pro
   await page.getByRole('button', { name: copy.landing.start }).click();
   await page.getByLabel(copy.create.nickname).fill(phone.name);
   await page.getByRole('radio', { name: copy.stickers.rabbit }).check();
-  if (options.sats) await page.getByRole('checkbox', { name: copy.create.satsToggle }).check();
   await page.getByRole('button', { name: copy.create.submit, exact: true }).click();
   await expect(page.getByRole('heading', { name: copy.waiting.title })).toBeVisible();
   return inviteLink(page, copy);
@@ -129,8 +127,6 @@ export function languageOf(copy: Copy): Language {
 
 export const BANNED_WORDS = /\b(keys?|hash(es)?|encrypt\w*|onions?|tokens?|protocols?|mix\w*)\b|암호|해시|토큰|프로토콜|믹스|어니언|공개키|비밀키|개인키/i;
 
-export const MONEY_WORDS = /bitcoin|\bsats?\b|wallet|lightning|비트코인|사토시|지갑|라이트닝/i;
-
 export const NON_ALLOWED_ABSOLUTES = /anonymous|untraceable|trustless|익명 보장|추적 불가/i;
 
 export async function expectNoSidewaysScroll(page: Page): Promise<void> {
@@ -169,7 +165,7 @@ export async function controlIssues(page: Page): Promise<ControlIssue[]> {
 }
 
 // Checks one screen against every rule that applies everywhere.
-export async function auditScreen(page: Page, label: string, satsOff: boolean): Promise<void> {
+export async function auditScreen(page: Page, label: string): Promise<void> {
   await page.evaluate(() =>
     Promise.all(
       document
@@ -183,12 +179,11 @@ export async function auditScreen(page: Page, label: string, satsOff: boolean): 
   const text = await visibleText(page);
   expect(text, `${label}: banned word`).not.toMatch(BANNED_WORDS);
   expect(text, `${label}: absolute claim`).not.toMatch(NON_ALLOWED_ABSOLUTES);
-  if (satsOff) expect(text, `${label}: money word`).not.toMatch(MONEY_WORDS);
 }
 
-export async function auditBothLanguages(page: Page, label: string, satsOff: boolean): Promise<void> {
-  await auditScreen(page, `${label} ko`, satsOff);
+export async function auditBothLanguages(page: Page, label: string): Promise<void> {
+  await auditScreen(page, `${label} ko`);
   await page.getByRole('button', { name: ko.languageToggleLabel }).click();
-  await auditScreen(page, `${label} en`, satsOff);
+  await auditScreen(page, `${label} en`);
   await page.getByRole('button', { name: en.languageToggleLabel }).click();
 }

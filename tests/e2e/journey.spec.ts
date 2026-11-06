@@ -30,7 +30,7 @@ async function moveTime(phones: Phone[], offsetMs: number): Promise<void> {
 
 test('a full game in Korean on four phones, from creating the round through settlement', async ({ browser }) => {
   test.setTimeout(240_000);
-  const { phones } = await gather(browser, NAMES, { sats: true });
+  const { phones } = await gather(browser, NAMES);
   const [organiser] = phones;
 
   await shot(organiser!.page, 'journey-01-waiting');
@@ -115,7 +115,7 @@ test('a full game in Korean on four phones, from creating the round through sett
     await expect(page.getByText(ko.settle.paidDone, { exact: true })).toBeVisible();
   }
   await shot(phones[0]!.page, 'journey-07-paid');
-  await auditBothLanguages(phones[0]!.page, 'settling', false);
+  await auditBothLanguages(phones[0]!.page, 'settling');
   for (const { page } of phones) {
     await page.getByRole('button', { name: ko.settle.gotIt, exact: true }).click();
     await expect(page.getByText(ko.settle.gotDone, { exact: true })).toBeVisible();
@@ -140,51 +140,49 @@ test('a full game in Korean on four phones, from creating the round through sett
   await expect(phones[0]!.page.getByText(ko.waiting.here(2))).toBeVisible();
 });
 
-test('every main screen passes the shared rules in both languages, in a round with sats off', async ({ browser }) => {
+test('every main screen passes the shared rules in both languages', async ({ browser }) => {
   test.setTimeout(180_000);
   const { phones } = await gather(browser, ['Alpha', 'Bravo', 'Charlie', 'Delta']);
   const [organiser, player] = phones as [Phone, Phone, ...Phone[]];
   const { page } = organiser;
 
-  await auditBothLanguages(page, 'waiting', true);
-  await auditBothLanguages(player.page, 'waiting, player', true);
+  await auditBothLanguages(page, 'waiting');
+  await auditBothLanguages(player.page, 'waiting, player');
 
   await page.getByRole('button', { name: ko.waiting.lock }).click();
   await expect(page.getByRole('button', { name: ko.check.match })).toBeVisible();
-  await auditBothLanguages(page, 'check', true);
+  await auditBothLanguages(page, 'check');
   await page.getByRole('button', { name: ko.check.match }).click();
   await Promise.all(phones.map((phone) => waitForGame(phone)));
 
-  await auditBothLanguages(page, 'home', true);
+  await auditBothLanguages(page, 'home');
   await pullSlip(organiser);
-  await auditBothLanguages(page, 'slip', true);
+  await auditBothLanguages(page, 'slip');
 
   await tab(page, ko.nav.send).click();
-  await auditBothLanguages(page, 'send', true);
+  await auditBothLanguages(page, 'send');
   await page.getByRole('button', { name: ko.send.ideaToggle }).click();
-  await auditBothLanguages(page, 'send with idea', true);
+  await auditBothLanguages(page, 'send with idea');
 
   await tab(page, ko.nav.inbox).click();
-  await auditBothLanguages(page, 'inbox empty', true);
+  await auditBothLanguages(page, 'inbox empty');
 
   await tab(page, ko.nav.reveal).click();
-  await auditBothLanguages(page, 'reveal countdown', true);
+  await auditBothLanguages(page, 'reveal countdown');
 
   await page.getByRole('button', { name: ko.menu.open }).click();
   await page.getByRole('button', { name: ko.menu.howTo }).click();
-  await auditBothLanguages(page, 'how to play', true);
+  await auditBothLanguages(page, 'how to play');
   await page.getByRole('button', { name: ko.menu.close }).click();
 
   await page.getByRole('button', { name: ko.menu.open }).click();
   await page.getByRole('button', { name: ko.menu.personal }).click();
-  await auditBothLanguages(page, 'personal link', true);
+  await auditBothLanguages(page, 'personal link');
   await page.getByRole('button', { name: ko.menu.close }).click();
 
   await page.getByRole('button', { name: ko.menu.open }).click();
   await page.getByRole('button', { name: ko.menu.server }).click();
-  const serverText = await visibleText(page);
-  expect(serverText).not.toMatch(/bitcoin|\bsats?\b|wallet|비트코인|사토시|지갑/i);
-  expect(serverText).toContain('해시');
+  expect(await visibleText(page)).toContain('해시');
   await page.getByRole('button', { name: ko.menu.close }).click();
 
   await moveTime(phones, FAR_FUTURE_MS);
@@ -193,8 +191,8 @@ test('every main screen passes the shared rules in both languages, in a round wi
   await tab(page, ko.nav.reveal).click();
   await page.getByRole('button', { name: ko.reveal.press }).click();
   await expect(page.locator('.pairs li')).toHaveCount(1, { timeout: 15_000 });
-  await auditBothLanguages(page, 'reveal after', true);
-  await expect(page.getByRole('heading', { name: ko.settle.title })).toHaveCount(0);
+  await auditBothLanguages(page, 'reveal after');
+  await expect(page.getByRole('heading', { name: ko.settle.title })).toBeVisible();
 });
 
 test('lockAndAgree helper leaves a drawn round ready', async ({ browser }) => {

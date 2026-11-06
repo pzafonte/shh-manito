@@ -5,6 +5,7 @@ import {
   en,
   expectNoSidewaysScroll,
   gather,
+  inviteLink,
   joinRound,
   ko,
   lockAndAgree,
@@ -30,25 +31,58 @@ test('the screens before a game starts pass the shared rules in both languages',
   const visitor = await newPhone(browser, 'Visitor');
   await visitor.page.goto('/');
   await expect(visitor.page.getByRole('button', { name: ko.landing.start })).toBeVisible();
-  await auditBothLanguages(visitor.page, 'landing', true);
+  await auditBothLanguages(visitor.page, 'landing');
 
   await visitor.page.getByRole('button', { name: ko.landing.howTo }).click();
-  await auditBothLanguages(visitor.page, 'how to play, no round', true);
+  await auditBothLanguages(visitor.page, 'how to play, no round');
   await visitor.page.getByRole('button', { name: ko.menu.close }).click();
 
   await visitor.page.getByRole('button', { name: ko.landing.start }).click();
-  await auditBothLanguages(visitor.page, 'create', false);
+  await auditBothLanguages(visitor.page, 'create');
 
   const { phones, link } = await gather(browser, ['Kim', 'Lee', 'Park', 'Choi']);
   const guest = await newPhone(browser, 'Guest');
   await guest.page.goto(link);
   await expect(guest.page.getByLabel(ko.join.nickname)).toBeVisible();
-  await auditBothLanguages(guest.page, 'join', true);
+  await auditBothLanguages(guest.page, 'join');
 
   await lockAndAgree(phones);
   await guest.page.reload();
   await expect(guest.page.getByRole('heading', { name: ko.noKeys.title })).toBeVisible();
-  await auditBothLanguages(guest.page, 'no keys', true);
+  await auditBothLanguages(guest.page, 'no keys');
+});
+
+test('every new round has sats, with no way to turn them off', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const organiser = await newPhone(browser, 'Host');
+  const { page } = organiser;
+  await page.goto('/');
+  await page.getByRole('button', { name: ko.landing.start }).click();
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await expect(page.getByText(ko.create.adultsNote)).toBeVisible();
+
+  const budget = page.getByLabel(ko.create.budget);
+  await expect(budget).toHaveValue('5000');
+  await page.getByLabel(ko.create.nickname).fill('Host');
+  await page.getByRole('radio', { name: ko.stickers.rabbit }).check();
+  await budget.fill('0');
+  await page.getByRole('button', { name: ko.create.submit, exact: true }).click();
+  await expect(page.getByText(ko.create.budgetBad)).toBeVisible();
+
+  await budget.fill('2000');
+  await page.getByRole('button', { name: ko.create.submit, exact: true }).click();
+  await expect(page.getByRole('heading', { name: ko.waiting.title })).toBeVisible();
+  const link = await inviteLink(page);
+  const others = await Promise.all(['Two', 'Three', 'Four'].map((name) => newPhone(browser, name)));
+  for (const other of others) await joinRound(other, link);
+  const phones = [organiser, ...others];
+  await lockAndAgree(phones);
+  await Promise.all(phones.map((each) => waitForGame(each)));
+
+  await pullSlip(organiser);
+  await tab(page, ko.nav.send).click();
+  await expect(page.getByText(ko.send.left('2,000'))).toBeVisible();
+  await expect(page.getByRole('radio', { name: ko.send.noPromise })).toBeVisible();
 });
 
 test('joining takes one text field and two taps', async ({ browser }) => {
@@ -129,7 +163,7 @@ test('the name stays off the screen until someone peeks', async ({ browser }) =>
 
 test('a personal link restores slip, inbox and promises in a fresh browser', async ({ browser }) => {
   test.setTimeout(120_000);
-  const { phones } = await gather(browser, ['Rain', 'Snow', 'Wind', 'Sun'], { sats: true });
+  const { phones } = await gather(browser, ['Rain', 'Snow', 'Wind', 'Sun']);
   await lockAndAgree(phones);
   await Promise.all(phones.map((each) => waitForGame(each)));
   for (const phone of phones) await pullSlip(phone);

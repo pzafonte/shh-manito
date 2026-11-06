@@ -1,4 +1,4 @@
-import { CARD_IDS, parseLink, PlayerClient, type CardId, type Player } from '@shh-manito/protocol';
+import { CARD_IDS, DEFAULT_BUDGET_SATS, parseLink, PlayerClient, type CardId, type Player } from '@shh-manito/protocol';
 import { useEffect, useState, type ReactNode } from 'react';
 import { downloadCalendar, formatDayTime, formatSats, nextFridayEvening } from '../browser';
 import { CopyButton, QrCode, Sticker, useReducedMotion } from '../components';
@@ -374,7 +374,8 @@ async function startRematch(game: GameHandle, onOpen: (client: PlayerClient) => 
       revealAt: nextFridayEvening(new Date()).getTime(),
       timeZone: meta.timeZone,
       mailTimes: meta.mailTimes,
-      budget: meta.budget,
+      // Rounds from before sats became standard can have a budget of zero.
+      budget: client.satsOn ? meta.budget : DEFAULT_BUDGET_SATS,
       nickname: me.nickname,
       sticker: me.sticker,
     },

@@ -67,7 +67,7 @@ export function Landing({
 }): ReactNode {
   const copy = useCopy();
   const [showHowTo, setShowHowTo] = useState(false);
-  if (showHowTo) return <HowTo satsOn={false} onClose={() => setShowHowTo(false)} />;
+  if (showHowTo) return <HowTo satsOn onClose={() => setShowHowTo(false)} />;
   return (
     <>
       <Header />

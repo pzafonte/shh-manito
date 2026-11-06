@@ -1,8 +1,10 @@
 import {
+  DEFAULT_BUDGET_SATS,
   MAX_PLAYERS,
   normaliseNickname,
   OfflineError,
   PlayerClient,
+  satsEnabled,
   type RoundLink,
   type RoundState,
   type StickerId,
@@ -32,7 +34,7 @@ export function Join({
   const [busy, setBusy] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
 
-  if (showHowTo) return <HowTo satsOn={false} onClose={() => setShowHowTo(false)} />;
+  if (showHowTo) return <HowTo satsOn={satsEnabled(state.meta?.budget ?? DEFAULT_BUDGET_SATS)} onClose={() => setShowHowTo(false)} />;
 
   const full = state.joined.length >= MAX_PLAYERS;
 

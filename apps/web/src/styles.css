@@ -274,19 +274,6 @@ select {
   font: inherit;
 }
 
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: var(--tap);
-}
-
-.toggle input {
-  flex: none;
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
 .stickers {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(3.25rem, 1fr));

@@ -29,6 +29,7 @@ export const MAX_SENT_CARDS = 100;
 export const MAX_NICKNAME_LENGTH = 20;
 export const MAX_ROUND_NAME_LENGTH = 40;
 export const MAX_BUDGET_SATS = 1_000_000n;
+export const DEFAULT_BUDGET_SATS = '5000';
 export const MAX_PAY_DETAIL_LENGTH = 800;
 
 export const ROUND_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;

@@ -30,7 +30,7 @@ async function moveTime(phones: Phone[], offsetMs: number): Promise<void> {
   await Promise.all(phones.map(({ context }) => context.clock.setFixedTime(Date.now() + offsetMs)));
 }
 
-test('the student: joins from a link, no bitcoin, Korean', async ({ browser }) => {
+test('the student: joins from a link, has never heard of bitcoin, Korean', async ({ browser }) => {
   test.setTimeout(180_000);
   const friends = await Promise.all(['민지', '서연', '지호'].map((name) => newPhone(browser, name)));
   const link = await createRound(friends[0]!);
@@ -96,17 +96,16 @@ test('the student: joins from a link, no bitcoin, Korean', async ({ browser }) =
   await shot(student.page, 'student-16-revealed');
 });
 
-test('the organiser in a hurry: sets it all up, sats on', async ({ browser }) => {
+test('the organiser in a hurry: sets it all up', async ({ browser }) => {
   test.setTimeout(180_000);
   const organiser = await newPhone(browser, '준호');
   await organiser.page.goto('/');
   await shot(organiser.page, 'organiser-01-landing');
   await organiser.page.getByRole('button', { name: ko.landing.start }).click();
   await shot(organiser.page, 'organiser-02-create');
-  await organiser.page.getByRole('checkbox', { name: ko.create.satsToggle }).check();
   await organiser.page.getByLabel(ko.create.nickname).fill('준호');
   await organiser.page.getByRole('radio', { name: ko.stickers.rabbit }).check();
-  await shot(organiser.page, 'organiser-03-create-sats');
+  await shot(organiser.page, 'organiser-03-create-filled');
   await organiser.page.getByRole('button', { name: ko.create.submit, exact: true }).click();
   await expect(organiser.page.getByRole('heading', { name: ko.waiting.title })).toBeVisible();
   await shot(organiser.page, 'organiser-04-waiting');
@@ -146,9 +145,9 @@ test('the organiser in a hurry: sets it all up, sats on', async ({ browser }) =>
   await shot(organiser.page, 'organiser-13-howto');
 });
 
-test('the older coworker: large text, sats on, through settling', async ({ browser }) => {
+test('the older coworker: large text, through settling', async ({ browser }) => {
   test.setTimeout(180_000);
-  const { phones } = await gather(browser, ['김부장', '이과장', '박대리', '최사원'], { sats: true });
+  const { phones } = await gather(browser, ['김부장', '이과장', '박대리', '최사원']);
   const [coworker] = phones as [Phone, ...Phone[]];
   const { page } = coworker;
   const big = async (): Promise<void> => {
