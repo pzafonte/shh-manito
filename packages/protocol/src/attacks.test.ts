@@ -832,6 +832,15 @@ describe('settlement', () => {
     expect(giver.client.inbox.got).toBe(true);
   });
 
+  it('lets a recipient replace details that went stale, such as an expired invoice', async () => {
+    const { players, giver, target } = await settledPair();
+    await target.client.sharePaymentDetail('first@example.com');
+    await settle(server, players);
+    await target.client.sharePaymentDetail('second@example.com');
+    await settle(server, players);
+    expect(giver.client.inbox.payDetail).toBe('second@example.com');
+  });
+
   it('lets the recipient clear a promise', async () => {
     const { players, giver, target } = await settledPair();
     await target.client.waivePromise();

@@ -162,6 +162,7 @@ function Getting({ game }: { game: GameHandle }): ReactNode {
   const { client } = game;
   const [detail, setDetail] = useState('');
   const [bad, setBad] = useState(false);
+  const [changing, setChanging] = useState(false);
   const total = client.inbox.cards.reduce((sum, card) => sum + BigInt(card.amount), 0n);
   const mine = client.local.settlement;
   if (total === 0n) return null;
@@ -176,14 +177,29 @@ function Getting({ game }: { game: GameHandle }): ReactNode {
         <p>{settle.keptIt}</p>
       ) : (
         <>
-          {mine.detail ? (
-            <p>{settle.detailSent}</p>
+          {mine.detail && !changing ? (
+            <>
+              <p>{settle.detailSent}</p>
+              {!mine.got && (
+                <button type="button" className="btn btn-quiet" onClick={() => setChanging(true)}>
+                  {settle.changeDetail}
+                </button>
+              )}
+            </>
           ) : (
             <form
               className="stack"
               onSubmit={(event) => {
                 event.preventDefault();
-                void game.act(() => client.sharePaymentDetail(detail)).then((ok) => setBad(!ok));
+                void game
+                  .act(() => client.sharePaymentDetail(detail))
+                  .then((ok) => {
+                    setBad(!ok);
+                    if (ok) {
+                      setChanging(false);
+                      setDetail('');
+                    }
+                  });
               }}
             >
               <label className="field">
