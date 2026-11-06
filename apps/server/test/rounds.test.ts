@@ -381,13 +381,24 @@ describe('a curious server', () => {
     );
   }
 
+  // Encrypted bodies are checked as decoded bytes instead. Left as base64 text, a round's
+  // 700 KB of it contains some four-letter name by chance about one run in five.
+  function plainRequestFields(): string {
+    return JSON.stringify(
+      server.requests.map(({ method, url, body }) => {
+        const { body: _body, blob: _blob, ...rest } = (body ? JSON.parse(body) : {}) as Record<string, unknown>;
+        return { method, url, rest };
+      }),
+    );
+  }
+
   it('finds no name, card, amount or payment detail in the database, the requests or the logs', async () => {
     const players = await gather(server, NAMES);
     await playWholeRound(players);
 
     const dump = tableDump();
     const disk = fileContents().toString('latin1');
-    const requests = JSON.stringify(server.requests);
+    const requests = plainRequestFields();
     const logs = server.logs.join('\n');
     expect(server.requests.length).toBeGreaterThan(100);
 
