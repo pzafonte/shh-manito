@@ -125,6 +125,21 @@ export function languageOf(copy: Copy): Language {
   return copy === ko ? 'ko' : 'en';
 }
 
+export const INVOICE_100_SATS = `lnbc1u1p${'q'.repeat(60)}`;
+
+// Stands in for a recipient's wallet service, which would be a third party on the
+// real internet. The browser still applies its real security policy to the request.
+export async function fakeWalletService(phone: Phone, requests: string[]): Promise<void> {
+  await phone.context.route('https://wallet.example/**', async (route) => {
+    const url = new URL(route.request().url());
+    requests.push(url.pathname + url.search);
+    const body = url.pathname.startsWith('/.well-known/lnurlp/')
+      ? { tag: 'payRequest', callback: 'https://wallet.example/pay', minSendable: 1000, maxSendable: 1_000_000_000, metadata: '[]' }
+      : { pr: INVOICE_100_SATS, routes: [] };
+    await route.fulfill({ json: body, headers: { 'access-control-allow-origin': '*' } });
+  });
+}
+
 export const BANNED_WORDS = /\b(keys?|hash(es)?|encrypt\w*|onions?|tokens?|protocols?|mix\w*)\b|암호|해시|토큰|프로토콜|믹스|어니언|공개키|비밀키|개인키/i;
 
 export const NON_ALLOWED_ABSOLUTES = /anonymous|untraceable|trustless|익명 보장|추적 불가/i;

@@ -71,7 +71,9 @@ export async function buildApp(options: AppOptions): Promise<BuiltApp> {
         styleSrc: ["'self'"],
         imgSrc: ["'self'", 'data:'],
         fontSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        // A giver's phone asks the recipient's wallet service for an invoice, and that
+        // can be any domain. This is the one place the policy reaches beyond this site.
+        connectSrc: ["'self'", 'https:'],
         objectSrc: ["'none'"],
         baseUri: ["'none'"],
         frameAncestors: ["'none'"],

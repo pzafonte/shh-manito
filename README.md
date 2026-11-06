@@ -5,17 +5,17 @@ in secret, look after that person for a week with fixed cute cards, and reveal o
 day. The design goal is that nobody learns who drew whom before then, including the person
 running the server.
 
-The app never touches money. A card can carry a promise of a few sats, and people pay what
-they promised from their own wallets after reveal day.
+The app never holds money. A card carries a promise of a few sats. After reveal day a giver's
+phone can ask the recipient's own wallet service for an invoice, and people pay from their own
+wallets.
 
 **Status:** nothing here has had an independent review. See [What is unverified](#what-is-unverified).
 
 ## Running it
 
-This machine has no system Node, so put the toolchain on your path first:
+You need Node 26.13 or later (below 27) and pnpm 12:
 
 ```sh
-export PATH="/Users/pzafonte/boss_challenge/seoul-sats/.toolchain/node/bin:$PATH"
 pnpm install
 ```
 
@@ -75,6 +75,8 @@ WALKTHROUGH_DIR=/some/path pnpm exec playwright test tests/e2e/walkthrough.spec.
   does on the network. If it did, a server could find any giver by holding back one slip and
   watching who reacts. This is invariant I2 in `docs/protocol.md`, and it is the easiest
   thing to break by accident.
+- **Invoices are fetched only on a tap.** Fetching one because an address arrived would break
+  the same rule, and it would tell the wallet service something too.
 - **Technical words stay on one screen.** Main screens use only game words. Tests enforce this
   in both languages.
 - **The Korean needs native review.** It was written to read naturally, but no native speaker
@@ -91,7 +93,7 @@ WALKTHROUGH_DIR=/some/path pnpm exec playwright test tests/e2e/walkthrough.spec.
 
 - Real phones. Tests run in desktop Chromium with phone emulation, never Safari or WebKit.
 - KakaoTalk's in-app browser, including storage and the URL fragment.
-- Real Lightning wallets.
+- Real Lightning wallets, and real wallet services answering invoice requests.
 - The Korean, which has had no native review.
 - Real people playing without help.
 - The cryptography, which has had no independent review.

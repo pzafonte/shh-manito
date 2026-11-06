@@ -5,6 +5,7 @@ import { CopyButton, QrCode, Sticker, useReducedMotion } from '../components';
 import { STICKER_EMOJI } from '../copy';
 import { makeTransport, type GameHandle } from '../game';
 import { useCopy, useLanguage } from '../i18n';
+import { fetchInvoice, isLightningAddress, type InvoiceFailure } from '../lightning';
 import { browserStore, saveSummary } from '../store';
 import { useNow } from './Play';
 
@@ -244,6 +245,59 @@ function Getting({ game }: { game: GameHandle }): ReactNode {
   );
 }
 
+function PayTarget({ target, sats }: { target: string; sats: string }): ReactNode {
+  const { settle } = useCopy();
+  return (
+    <>
+      <a className="btn" href={`lightning:${target}`}>
+        {settle.payOpen}
+      </a>
+      <CopyButton text={target} label={settle.payCopy} done={settle.payCopied} />
+      <QrCode text={`lightning:${target}`} alt={settle.payQr} />
+      <p className="note">{settle.payCheck(sats)}</p>
+    </>
+  );
+}
+
+function AddressPay({ address, total, sats }: { address: string; total: bigint; sats: string }): ReactNode {
+  const { settle } = useCopy();
+  const [invoice, setInvoice] = useState<string | null>(null);
+  const [failure, setFailure] = useState<InvoiceFailure | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (invoice) return <PayTarget target={invoice} sats={sats} />;
+
+  const failureText: Record<InvoiceFailure, string> = {
+    unreachable: settle.invoiceUnreachable,
+    'out-of-range': settle.invoiceOutOfRange,
+    'wrong-amount': settle.invoiceWrongAmount,
+  };
+
+  return (
+    <>
+      <p className="note">{settle.providerNote}</p>
+      <button
+        type="button"
+        className="btn"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          setFailure(null);
+          void fetchInvoice(address, total).then((result) => {
+            setBusy(false);
+            if (result.ok) setInvoice(result.invoice);
+            else setFailure(result.failure);
+          });
+        }}
+      >
+        {busy ? settle.gettingInvoice : settle.getInvoice}
+      </button>
+      {failure && <p role="alert">{failureText[failure]}</p>}
+      {failure && failure !== 'out-of-range' && <PayTarget target={address} sats={sats} />}
+    </>
+  );
+}
+
 function Giving({ game }: { game: GameHandle }): ReactNode {
   const { settle } = useCopy();
   const { language } = useLanguage();
@@ -263,12 +317,11 @@ function Giving({ game }: { game: GameHandle }): ReactNode {
         <p>{settle.theyWaived}</p>
       ) : payDetail ? (
         <>
-          <a className="btn" href={`lightning:${payDetail}`}>
-            {settle.payOpen}
-          </a>
-          <CopyButton text={payDetail} label={settle.payCopy} done={settle.payCopied} />
-          <QrCode text={`lightning:${payDetail}`} alt={settle.payQr} />
-          <p className="note">{settle.payCheck(sats)}</p>
+          {isLightningAddress(payDetail) ? (
+            <AddressPay key={payDetail} address={payDetail} total={total} sats={sats} />
+          ) : (
+            <PayTarget target={payDetail} sats={sats} />
+          )}
           {paid ? (
             <p>{settle.paidDone}</p>
           ) : (

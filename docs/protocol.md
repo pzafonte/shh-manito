@@ -365,6 +365,16 @@ can spell (finding F20).
 Reading a parcel causes no network activity. Clients poll at a rate set only by the
 public phase of the round: fast during the draw, slow afterwards.
 
+**Invoices from a Lightning address.** A `pay` parcel holds a Lightning address or a BOLT 11
+invoice. For an address, the giver can tap to fetch an invoice for exactly what they promised,
+following LUD-06 and LUD-16: the phone asks `https://<domain>/.well-known/lnurlp/<name>`, checks
+the amount is in range, then calls the `https` callback with `amount` in millisatoshis and no
+other field. It rejects any invoice whose amount differs. This runs in the browser, so the game
+server takes no part, and it only ever runs on a tap (invariant I2, finding F27). If it fails,
+the address is offered for the giver's wallet to pay directly. The app never holds funds: the
+invoice comes from the recipient's own wallet service and is paid from the giver's own wallet.
+It does not check the invoice's description hash against the offer's metadata.
+
 **Reveal.** After `revealAt` a player may post:
 
 ```
@@ -408,7 +418,8 @@ attempt restarts, which is safe because nothing has been built on it yet.
 
 `meSecret` stays in IndexedDB so the link can be shown again. This means script
 running in the page could read it and recover keys, whatever `extractable` says
-(finding F18). That risk is carried by the content security policy.
+(finding F18). The content security policy stops other sites' script running here,
+but since finding F27 it no longer limits where a page may send data.
 
 ## 9. Findings
 
@@ -542,6 +553,17 @@ nonce was not in the backup, so a restored phone could only reveal a nonce that 
 nothing. *Fix:* the nonce is backed up when it is made. It only needs hiding until every
 commitment is in, and the backup is encrypted.
 
+**F27. Fetching invoices reaches beyond the site.** A change requested after the first
+version, which had ruled out creating invoices. *Costs, accepted:* `connect-src` had to widen
+to any `https:` site, so if script ever did run in the page, the policy would no longer stop it
+sending data out. That removes a second line of defence behind F18, though the first, no
+third-party script and no free text, is unchanged. The recipient's wallet service sees the
+giver's address and the amount, and someone running their own service could use that. *Limits:*
+requests run only on a tap, because fetching when an address arrived would be network activity
+caused by private knowledge, breaking I2. Only the amount is sent. A returned invoice must match
+the promise exactly. Addresses must name a real domain, not an IP, so a player cannot aim other
+phones at a machine on their network.
+
 ### Backups and metadata
 
 **F15. A backup that reacts to arrivals is an oracle.** Refreshing the backup when a card
@@ -580,6 +602,7 @@ themselves as the holder. It is the cost of names that cannot be faked.
    `ready` step closes the attempt (F2). The parcel inside is the same sealed form.
 6. Group entries are padded (F7). Held entries get fresh sequence numbers (F8).
 7. Failed attempts are capped at 4 (F12).
+8. A giver's phone can fetch an invoice from the recipient's wallet service (F27).
 
 ## 10. What this cannot fix
 

@@ -27,7 +27,7 @@ export const STICKER_IDS = [
 ] as const;
 export type StickerId = (typeof STICKER_IDS)[number];
 
-const LIGHTNING_ADDRESS = /^[a-z0-9._-]{1,64}@[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$/;
+const LIGHTNING_ADDRESS = /^[a-z0-9._-]{1,64}@[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})*\.[a-z][a-z0-9-]{0,62}$/;
 const BOLT11_INVOICE = /^ln(bc|tb|tbs|bcrt)[0-9]*[munp]?1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{20,}$/;
 
 export function isPaymentDetail(text: string): boolean {

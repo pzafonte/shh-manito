@@ -181,7 +181,10 @@ describe('rounds', () => {
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('referrer-policy')).toBe('no-referrer');
-    expect(response.headers.get('content-security-policy')).toContain("default-src 'self'");
+    const policy = response.headers.get('content-security-policy');
+    expect(policy).toContain("default-src 'self'");
+    expect(policy).toContain("script-src 'self'");
+    expect(policy).toContain("connect-src 'self' https:");
   });
 });
 

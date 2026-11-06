@@ -179,7 +179,7 @@ export function ServerSees({ client, onClose }: { client: PlayerClient; onClose(
       <section className="stack">
         <h2>{text.leaksTitle}</h2>
         <ul>
-          {text.leaks.map((line) => (
+          {(client.satsOn ? [...text.leaks, text.satsLeak] : text.leaks).map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>

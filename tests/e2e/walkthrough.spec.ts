@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   createRound,
   gather,
+  INVOICE_100_SATS,
   joinRound,
   ko,
   newPhone,
@@ -191,7 +192,7 @@ test('the older coworker: large text, through settling', async ({ browser }) => 
   await expect(page.locator('.pairs li')).toHaveCount(4, { timeout: 20_000 });
   await shot(page, 'coworker-07-revealed');
   for (const phone of phones) {
-    await phone.page.getByLabel(ko.settle.detailLabel).fill('friend@example.com');
+    await phone.page.getByLabel(ko.settle.detailLabel).fill(INVOICE_100_SATS);
     await phone.page.getByRole('button', { name: ko.settle.detailSend }).click();
     await expect(phone.page.getByText(ko.settle.detailSent)).toBeVisible();
   }

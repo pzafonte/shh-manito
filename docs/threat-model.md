@@ -45,6 +45,7 @@ the chat provider. It says plainly that anyone holding the link can see the slip
 | Their giver | That player's name, and that they sit one place along the circle | Who that player drew |
 | Two colluding players | Their two targets | Others' links, unless they are exactly two apart (below) |
 | Someone holding a personal link | Everything that player knows | Other players' links, or that player's shuffle in the draw |
+| The recipient's wallet service | The giver's IP address and the amount, if the giver taps to make an invoice | Nicknames, or anything else about the game |
 
 ## Known weaknesses
 
@@ -83,7 +84,15 @@ By then hiding the sender no longer matters.
 **Script in the page.** Private keys are non-extractable, but the personal link secret stays
 readable so the link can be shown again, and it can recover the keys. Any script running in the
 page could read it. The defence is a strict content security policy, no third-party code and no
-free text from other players.
+free text from other players. The policy still stops other sites' script running here, but it no
+longer limits where a page can send data, because phones must reach any wallet service. If script
+ever did get in, nothing would stop it sending keys out.
+
+**Paying a Lightning address.** Making an invoice sends the giver's IP address and the amount to
+the recipient's wallet service. It happens only on a tap, and the screen says so first. A recipient
+who runs their own service, or knows who does, could see that address. That only matters for
+someone who pays without revealing, and only after the reveal time, because payment details are
+not sent before then. The app does not check the invoice's description hash, only its amount.
 
 **Payment details.** The field only accepts a Lightning address or invoice shape, on sending and on
 receiving. An address can still spell a short word.
@@ -109,6 +118,8 @@ off.
 
 ## Money
 
-The app holds no sats, creates no invoices, talks to no Lightning node and takes no fee. A card
-carries a promise, which is a number in a sealed parcel. Payment happens outside the app, directly
-between players, after reveal day.
+The app holds no sats, runs no Lightning node and takes no fee. A card carries a promise, which is
+a number in a sealed parcel. After the reveal time a giver's phone can ask the recipient's own wallet
+service for an invoice, and the game server takes no part in that. Payment happens outside the app,
+directly between players' wallets. Whether this affects how any rules on virtual assets apply has not
+had legal review.

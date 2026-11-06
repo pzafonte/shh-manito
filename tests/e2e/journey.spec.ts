@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import {
   auditBothLanguages,
+  fakeWalletService,
   gather,
+  INVOICE_100_SATS,
   ko,
   lockAndAgree,
   peekName,
@@ -104,16 +106,24 @@ test('a full game in Korean on four phones, from creating the round through sett
     await expect(phone.page.getByText(ko.reveal.giver(giverOf(phone.name).name))).toBeVisible();
   }
 
+  const walletRequests: string[] = [];
+  for (const phone of phones) await fakeWalletService(phone, walletRequests);
   for (const phone of phones) {
-    await phone.page.getByLabel(ko.settle.detailLabel).fill('friend@example.com');
+    await phone.page.getByLabel(ko.settle.detailLabel).fill('friend@wallet.example');
     await phone.page.getByRole('button', { name: ko.settle.detailSend }).click();
     await expect(phone.page.getByText(ko.settle.detailSent)).toBeVisible();
   }
+  for (const { page } of phones) await expect(page.getByRole('button', { name: ko.settle.getInvoice })).toBeVisible();
+  expect(walletRequests).toEqual([]);
+
   for (const { page } of phones) {
-    await expect(page.getByRole('link', { name: ko.settle.payOpen })).toHaveAttribute('href', 'lightning:friend@example.com');
+    await page.getByRole('button', { name: ko.settle.getInvoice }).click();
+    await expect(page.getByRole('link', { name: ko.settle.payOpen })).toHaveAttribute('href', `lightning:${INVOICE_100_SATS}`);
     await page.getByRole('button', { name: ko.settle.paid, exact: true }).click();
     await expect(page.getByText(ko.settle.paidDone, { exact: true })).toBeVisible();
   }
+  expect(walletRequests.filter((path) => path.includes('lnurlp'))).toHaveLength(4);
+  expect(walletRequests.filter((path) => path === '/pay?amount=100000')).toHaveLength(4);
   await shot(phones[0]!.page, 'journey-07-paid');
   await auditBothLanguages(phones[0]!.page, 'settling');
   for (const { page } of phones) {
@@ -138,6 +148,41 @@ test('a full game in Korean on four phones, from creating the round through sett
   await phones[1]!.page.getByRole('button', { name: ko.after.againJoin }).click();
   await expect(phones[1]!.page.getByRole('heading', { name: ko.waiting.title })).toBeVisible();
   await expect(phones[0]!.page.getByText(ko.waiting.here(2))).toBeVisible();
+});
+
+test('a wallet service that fails is not a dead end', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const { phones } = await gather(browser, ['Ann', 'Ben', 'Cal', 'Dee']);
+  await lockAndAgree(phones);
+  await Promise.all(phones.map((phone) => waitForGame(phone)));
+  for (const phone of phones) await pullSlip(phone);
+
+  const giver = phones[0]!;
+  const targetName = await peekName(giver);
+  const target = phones.find(({ name }) => name === targetName)!;
+  await tab(giver.page, ko.nav.send).click();
+  await giver.page.getByRole('radio', { name: ko.cards.smile }).check();
+  await giver.page.getByRole('button', { name: ko.send.submit }).click();
+  await expect(giver.page.locator('.sent')).toBeVisible();
+
+  await giver.context.route('https://wallet.example/**', (route) => route.abort());
+  await moveTime(phones, FAR_FUTURE_MS);
+  for (const { page } of [giver, target]) {
+    await tab(page, ko.nav.home).click();
+    await tab(page, ko.nav.reveal).click();
+  }
+
+  await target.page.getByLabel(ko.settle.detailLabel).fill('friend@wallet.example');
+  await target.page.getByRole('button', { name: ko.settle.detailSend }).click();
+  await giver.page.getByRole('button', { name: ko.settle.getInvoice }).click();
+  await expect(giver.page.getByText(ko.settle.invoiceUnreachable)).toBeVisible();
+  await expect(giver.page.getByRole('link', { name: ko.settle.payOpen })).toHaveAttribute('href', 'lightning:friend@wallet.example');
+  await expect(giver.page.getByRole('button', { name: ko.settle.paid, exact: true })).toBeVisible();
+
+  await target.page.getByRole('button', { name: ko.settle.changeDetail }).click();
+  await target.page.getByLabel(ko.settle.detailLabel).fill(INVOICE_100_SATS);
+  await target.page.getByRole('button', { name: ko.settle.detailSend }).click();
+  await expect(giver.page.getByRole('link', { name: ko.settle.payOpen })).toHaveAttribute('href', `lightning:${INVOICE_100_SATS}`);
 });
 
 test('every main screen passes the shared rules in both languages', async ({ browser }) => {
